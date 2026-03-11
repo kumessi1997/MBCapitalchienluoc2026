@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>So sánh Tăng trưởng VN-Index và GDP Việt Nam</title>
+    <!-- Thêm Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thêm Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Tùy chỉnh nhẹ cho input color */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <!-- Header & Bảng điều khiển -->
+        <div
+            class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 flex flex-col gap-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div class="relative flex-1">
+                    <h1 class="text-2xl font-bold text-gray-800">Tăng trưởng VN-Index và GDP Việt Nam</h1>
+                    <p class="text-gray-500 mt-1">Giai đoạn 2000 - 2025</p>
+                    <button onclick="downloadImage('comparisonChart', 'bieu-do-so-sanh-gdp-vnindex')" class="absolute right-0 top-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-all shadow-md flex items-center gap-2 text-sm font-semibold" title="Tải ảnh biểu đồ">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Chụp ảnh</span>
+                    </button>
+                </div>
+
+                <!-- Bảng điều khiển màu -->
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex gap-6 w-full md:w-auto overflow-x-auto">
+                    <div class="flex items-center gap-3 shrink-0">
+                        <input type="color" id="gdpColor" value="#3b82f6" title="Chọn màu cho GDP">
+                        <div class="flex flex-col">
+                            <label for="gdpColor" class="text-sm font-semibold text-gray-700 cursor-pointer">Màu GDP</label>
+                            <span class="text-xs text-gray-500">Đường</span>
+                        </div>
+                    </div>
+
+                    <div class="w-px bg-gray-200"></div> <!-- Divider -->
+
+                    <div class="flex items-center gap-3 shrink-0">
+                        <input type="color" id="vnindexColor" value="#ef4444" title="Chọn màu cho VN-Index">
+                        <div class="flex flex-col">
+                            <label for="vnindexColor" class="text-sm font-semibold text-gray-700 cursor-pointer">Màu VN-Index</label>
+                            <span class="text-xs text-gray-500">Cột</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng điều khiển dữ liệu -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Tăng trưởng GDP (%) (ngăn cách bởi dấu phẩy)</label>
+                    <textarea id="gdpData" class="w-full p-2 text-xs border rounded h-20 font-mono">6.79, 6.19, 6.32, 6.90, 7.54, 7.55, 6.98, 7.13, 5.66, 5.40, 6.42, 6.41, 5.50, 5.55, 6.42, 6.99, 6.69, 6.94, 7.47, 7.36, 2.87, 2.55, 8.12, 5.05, 7.09, 8.02</textarea>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-gray-500 uppercase">Tăng trưởng VN-Index (%) (ngăn cách bởi dấu phẩy)</label>
+                    <textarea id="vnindexData" class="w-full p-2 text-xs border rounded h-20 font-mono">106.83, 13.81, -22.12, -8.94, 43.34, 28.51, 144.48, 23.31, -65.95, 56.76, -2.04, -27.46, 17.68, 21.97, 8.13, 6.12, 14.82, 48.03, -9.32, 7.67, 14.87, 35.73, -32.78, 12.20, 10.55, 42.85</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vùng chứa biểu đồ -->
+        <div
+            class="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-gray-100 relative aspect-[5/3] w-full max-w-5xl mx-auto">
+            <canvas id="comparisonChart"></canvas>
+        </div>
+
+    </div>
+
+    <script>
+        // Dữ liệu mặc định
+        let years = Array.from({ length: 26 }, (_, i) => 2000 + i);
+        let gdp_growth_percent = [
+            6.79, 6.19, 6.32, 6.90, 7.54, 7.55, 6.98, 7.13, 5.66, 5.40,
+            6.42, 6.41, 5.50, 5.55, 6.42, 6.99, 6.69, 6.94, 7.47, 7.36,
+            2.87, 2.55, 8.12, 5.05, 7.09, 8.02
+        ];
+        let vnindex_growth_percent = [
+            106.83, 13.81, -22.12, -8.94, 43.34, 28.51, 144.48, 23.31, -65.95, 56.76,
+            -2.04, -27.46, 17.68, 21.97, 8.13, 6.12, 14.82, 48.03, -9.32, 7.67,
+            14.87, 35.73, -32.78, 12.20, 10.55, 42.85
+        ];
+
+        // Khởi tạo biểu đồ
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    {
+                        type: 'line',
+                        label: 'Tăng trưởng GDP (%)',
+                        data: gdp_growth_percent,
+                        borderColor: document.getElementById('gdpColor').value,
+                        backgroundColor: document.getElementById('gdpColor').value,
+                        borderWidth: 3,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y-gdp',
+                        order: 1
+                    },
+                    {
+                        type: 'bar',
+                        label: 'Tăng trưởng VN-Index (%)',
+                        data: vnindex_growth_percent,
+                        backgroundColor: document.getElementById('vnindexColor').value,
+                        yAxisID: 'y-vnindex',
+                        borderRadius: 4,
+                        order: 2
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        titleColor: '#1f2937',
+                        bodyColor: '#4b5563',
+                        borderColor: '#e5e7eb',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    const value = context.parsed.y;
+                                    const formattedValue = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value);
+                                    label += (value > 0 ? '+' : '') + formattedValue + '%';
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                family: "'Inter', sans-serif"
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    'y-gdp': {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Tăng trưởng GDP (%)',
+                            color: '#4b5563',
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            color: '#f3f4f6'
+                        },
+                        min: -10,
+                        max: 15
+                    },
+                    'y-vnindex': {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Tăng trưởng VN-Index (%)',
+                            color: '#4b5563',
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                        min: -100,
+                        max: 200
+                    }
+                }
+            }
+        });
+
+        // Xử lý sự kiện cập nhật
+        const gdpColorInput = document.getElementById('gdpColor');
+        const vnindexColorInput = document.getElementById('vnindexColor');
+        const gdpDataInput = document.getElementById('gdpData');
+        const vnindexDataInput = document.getElementById('vnindexData');
+
+        function updateAll() {
+            // Cập nhật dữ liệu
+            gdp_growth_percent = gdpDataInput.value.split(',').map(s => parseFloat(s.trim()) || 0);
+            vnindex_growth_percent = vnindexDataInput.value.split(',').map(s => parseFloat(s.trim()) || 0);
+
+            // Cập nhật năm dựa trên số lượng dữ liệu (giả sử bắt đầu từ 2000)
+            const count = Math.max(gdp_growth_percent.length, vnindex_growth_percent.length);
+            years = Array.from({ length: count }, (_, i) => 2000 + i);
+
+            chart.data.labels = years;
+            chart.data.datasets[0].data = gdp_growth_percent;
+            chart.data.datasets[1].data = vnindex_growth_percent;
+
+            // Cập nhật màu sắc
+            chart.data.datasets[0].borderColor = gdpColorInput.value;
+            chart.data.datasets[0].backgroundColor = gdpColorInput.value;
+            chart.data.datasets[1].backgroundColor = vnindexColorInput.value;
+
+            // Đồng bộ trục Y (tự động điều chỉnh dựa trên dữ liệu mới)
+            const maxGdp = Math.max(...gdp_growth_percent, 1);
+            const minGdp = Math.min(...gdp_growth_percent, -1);
+            const maxVn = Math.max(...vnindex_growth_percent, 1);
+            const minVn = Math.min(...vnindex_growth_percent, -1);
+
+            chart.options.scales['y-gdp'].max = maxGdp + 2;
+            chart.options.scales['y-gdp'].min = minGdp - 2;
+            chart.options.scales['y-vnindex'].max = maxVn + 20;
+            chart.options.scales['y-vnindex'].min = minVn - 20;
+
+            chart.update();
+        }
+
+        [gdpColorInput, vnindexColorInput, gdpDataInput, vnindexDataInput].forEach(input => {
+            input.addEventListener('input', updateAll);
+        });
+
+        // Chạy lần đầu
+        updateAll();
+
+        // Hàm tải ảnh biểu đồ
+        function downloadImage(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+            const link = document.createElement('a');
+            link.download = fileName + '.png';
+            link.href = tempCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+    </script>
+</body>
+
+</html>

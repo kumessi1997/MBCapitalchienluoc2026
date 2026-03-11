@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu đồ GDP/người (USD)</title>
+
+    <!-- Import Chart.js và các plugins từ CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
+
+    <style>
+        /* Đặt font chữ và màu nền xám nhạt cho toàn bộ trang (giống slide) */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #eef1f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Container chính chứa biểu đồ và bảng điều khiển */
+        .presentation-slide {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 1200px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Tiêu đề biểu đồ */
+        .chart-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* Bảng điều khiển màu sắc (Control Panel) */
+        .control-panel {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        /* Tuỳ chỉnh input color picker cho đẹp mắt */
+        input[type="color"] {
+            appearance: none;
+            -webkit-appearance: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #ccc;
+            border-radius: 50%;
+        }
+
+        /* Khu vực hiển thị biểu đồ */
+        .chart-wrapper {
+            position: relative;
+            aspect-ratio: 5 / 3;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #ffffff;
+            /* Sẽ được thay đổi qua Control Panel */
+            transition: background-color 0.3s ease;
+        }
+
+        /* Responsive cơ bản */
+        @media (max-width: 768px) {
+            .chart-wrapper {
+                height: auto;
+            }
+
+            .chart-title {
+                font-size: 22px;
+            }
+        }
+
+        /* Capture Button Style */
+        .capture-btn {
+            background-color: #101bd2;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .capture-btn:hover {
+            background-color: #0c14a8;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .capture-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="presentation-slide relative">
+        <div class="chart-title">GDP/người (USD)</div>
+        <button onclick="downloadImage('gdpChart', 'bieu-do-gdp')" class="capture-btn absolute right-8 top-8" title="Tải ảnh biểu đồ">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Chụp ảnh</span>
+        </button>
+
+        <!-- Bảng điều khiển màu sắc và dữ liệu -->
+        <div class="control-panel">
+            <div class="w-full mb-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Dữ liệu GDP (Năm:Giá trị, ngăn cách bởi dấu phẩy)</label>
+                <textarea id="gdpDataInput" class="w-full p-2 text-sm border rounded h-24 font-mono">1991:123.36, 1993:178.97, 1996:358.66, 1998:424.17, 2000:478.59, 2003:513.20, 2007:756.98, 2011:1536.25, 2013:1949.83, 2015:2369.97, 2017:2720.10, 2019:3548.89, 2021:4535.76, 2023:5041.89, F2025:5957.56, F2027:6289.51, F2029:6800.00</textarea>
+            </div>
+            <div class="flex flex-wrap gap-6 justify-center items-center w-full">
+                <div class="control-group">
+                    <label for="lineColor">Màu Đường:</label>
+                    <input type="color" id="lineColor" value="#101bd2">
+                </div>
+                <div class="control-group">
+                    <label for="pointColor">Màu Điểm:</label>
+                    <input type="color" id="pointColor" value="#eb2747">
+                </div>
+                <div class="control-group">
+                    <label for="bgColor">Màu Nền Chart:</label>
+                    <input type="color" id="bgColor" value="#ffffff">
+                </div>
+            </div>
+        </div>
+
+        <!-- Khu vực vẽ biểu đồ -->
+        <div class="chart-wrapper" id="chartWrapper">
+            <canvas id="gdpChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // 1. Đăng ký các plugin
+        Chart.register(ChartDataLabels, window['chartjs-plugin-annotation']);
+
+        // 2. Chuẩn bị dữ liệu mẫu (Mặc định)
+        let dataRaw = [
+            { year: '1991', gdp: 123.36 },
+            { year: '1993', gdp: 178.97 },
+            { year: '1996', gdp: 358.66 },
+            { year: '1998', gdp: 424.17 },
+            { year: '2000', gdp: 478.59 },
+            { year: '2003', gdp: 513.20 },
+            { year: '2007', gdp: 756.98 },
+            { year: '2011', gdp: 1536.25 },
+            { year: '2013', gdp: 1949.83 },
+            { year: '2015', gdp: 2369.97 },
+            { year: '2017', gdp: 2720.10 },
+            { year: '2019', gdp: 3548.89 },
+            { year: '2021', gdp: 4535.76 },
+            { year: '2023', gdp: 5041.89 },
+            { year: 'F2025', gdp: 5957.56 },
+            { year: 'F2027', gdp: 6289.51 },
+            { year: 'F2029', gdp: 6800.00 }
+        ];
+
+        // Hàm chuyển mã Hex sang dạng RGB để dùng cho gradient
+        const hexToRgb = (hex) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '7, 28, 44';
+        };
+
+        const createGradient = (ctx, colorHex) => {
+            const rgb = hexToRgb(colorHex);
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, `rgba(${rgb}, 0.5)`);
+            gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);
+            return gradient;
+        };
+
+        // Hàm format số
+        const formatNumber = (value) => {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        };
+
+        // 3. Khởi tạo biểu đồ
+        const ctx = document.getElementById('gdpChart').getContext('2d');
+        const gdpChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dataRaw.map(item => item.year),
+                datasets: [{
+                    label: 'GDP/người (USD)',
+                    data: dataRaw.map(item => item.gdp),
+                    borderColor: '#101bd2',
+                    backgroundColor: createGradient(ctx, '#101bd2'),
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#eb2747',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7,
+                    fill: true,
+                    tension: 0.4,
+                    segment: {
+                        borderDash: ctx => ctx.p0DataIndex >= 13 ? [6, 6] : undefined
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                },
+                layout: {
+                    padding: {
+                        top: 20 // Đã giảm bớt so với cũ
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: 8000,
+                        title: {
+                            display: true,
+                            text: 'USD',
+                            font: { weight: 'bold' }
+                        },
+                        ticks: {
+                            callback: function (value) {
+                                return formatNumber(value);
+                            }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Năm',
+                            font: { weight: 'bold' }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 14, family: 'Segoe UI' } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 },
+                        padding: 12,
+                        callbacks: {
+                            label: function (context) {
+                                return ` ${context.dataset.label}: ${formatNumber(context.parsed.y)}`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        align: 'top',
+                        anchor: 'end',
+                        offset: 6,
+                        color: '#495057',
+                        font: { size: 11, weight: 'bold', family: 'Segoe UI' },
+                        formatter: function (value) {
+                            return formatNumber(value);
+                        }
+                    }
+                }
+            }
+        });
+
+        // 4. Xử lý logic cập nhật Realtime
+        const lineColorInput = document.getElementById('lineColor');
+        const pointColorInput = document.getElementById('pointColor');
+        const bgColorInput = document.getElementById('bgColor');
+        const gdpDataInput = document.getElementById('gdpDataInput');
+
+        function updateAll() {
+            // Cập nhật dữ liệu
+            const rawText = gdpDataInput.value;
+            const items = rawText.split(',').map(s => s.trim());
+            const newData = [];
+            items.forEach(item => {
+                const parts = item.split(':');
+                if (parts.length === 2) {
+                    newData.push({ year: parts[0].trim(), gdp: parseFloat(parts[1].trim()) || 0 });
+                }
+            });
+
+            if (newData.length > 0) {
+                gdpChart.data.labels = newData.map(item => item.year);
+                gdpChart.data.datasets[0].data = newData.map(item => item.gdp);
+            }
+
+            // Cập nhật màu sắc
+            const lineColor = lineColorInput.value;
+            const pointColor = pointColorInput.value;
+            const bgColor = bgColorInput.value;
+
+            gdpChart.data.datasets[0].borderColor = lineColor;
+            gdpChart.data.datasets[0].backgroundColor = createGradient(ctx, lineColor);
+            gdpChart.data.datasets[0].pointBorderColor = pointColor;
+            document.getElementById('chartWrapper').style.backgroundColor = bgColor;
+
+            gdpChart.update();
+        }
+
+        // Lắng nghe sự kiện
+        [lineColorInput, pointColorInput, bgColorInput, gdpDataInput].forEach(input => {
+            input.addEventListener('input', updateAll);
+        });
+
+        // Chạy lần đầu
+        updateAll();
+
+        // Hàm tải ảnh biểu đồ
+        function downloadImage(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+            const link = document.createElement('a');
+            link.download = fileName + '.png';
+            link.href = tempCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+    </script>
+</body>
+
+</html>

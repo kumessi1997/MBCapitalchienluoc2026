@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu đồ tích lũy 10 triệu/tháng trong 40 năm</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Control Panel */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f1f5f9;
+            border-radius: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: none;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container {
+            position: relative;
+            aspect-ratio: 12 / 5;
+            width: 100%;
+            max-width: 950px;
+            margin: 0 auto;
+            border-radius: 1rem;
+            padding: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem;
+                border-radius: 0;
+            }
+
+            .chart-container {
+                height: auto;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Capture Button Style */
+        .capture-btn {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .capture-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .capture-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header class="relative flex flex-col items-center">
+            <h1>Biểu đồ tích lũy 10 triệu/tháng trong 40 năm</h1>
+            <p class="subtitle">Giả định lãi suất 12%/năm, lãi kép tính hàng năm</p>
+            <button onclick="downloadImage('investmentChart', 'bieu-do-tich-luy')" class="capture-btn absolute right-0 top-0" title="Tải ảnh biểu đồ">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Chụp ảnh</span>
+            </button>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Thông số đầu tư</label>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs w-20">Số tiền/tháng:</span>
+                        <input type="number" id="monthlyInv" value="10000000" step="1000000" class="flex-1 px-2 py-1 text-sm border rounded">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs w-20">Lãi suất (%):</span>
+                        <input type="number" id="annualRate" value="12" step="0.5" class="flex-1 px-2 py-1 text-sm border rounded">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs w-20">Số năm:</span>
+                        <input type="number" id="totalYears" value="40" step="1" class="flex-1 px-2 py-1 text-sm border rounded">
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>Màu tiền gốc</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorPrincipal" value="#071C2C">
+                    <span id="hexPrincipal">#071C2C</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>Màu tiền lãi</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorInterest" value="#A28C75">
+                    <span id="hexInterest">#A28C75</span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>Màu nền biểu đồ</label>
+                <div class="color-picker-wrapper">
+                    <input type="color" id="colorChartBg" value="#ffffff">
+                    <span id="hexChartBg">#ffffff</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container" id="chartWrapper">
+            <canvas id="investmentChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // 1. Cấu hình thông số đầu tư (Mặc định)
+        let MONTHLY_INVESTMENT = 10000000; // 10 triệu VNĐ
+        let ANNUAL_RATE = 0.12; // 12%
+        let TOTAL_YEARS = 40;
+
+        // 2. Hàm định dạng tiền tệ VNĐ
+        const formatVND = (value) => {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND',
+                maximumFractionDigits: 0
+            }).format(value);
+        };
+
+        // 3. Hàm tính toán dữ liệu
+        function calculateData() {
+            const labels = [];
+            const principalData = [];
+            const interestData = [];
+
+            // Gộp 10 triệu/tháng thành 120 triệu nộp vào cuối mỗi năm
+            const yearlyInvestment = MONTHLY_INVESTMENT * 12;
+
+            // Tính cho mỗi mốc 5 năm
+            for (let year = 5; year <= TOTAL_YEARS; year += 5) {
+                const totalAsset = yearlyInvestment * ((Math.pow(1 + ANNUAL_RATE, year) - 1) / ANNUAL_RATE);
+                const totalPrincipal = yearlyInvestment * year;
+                const totalInterest = totalAsset - totalPrincipal;
+
+                labels.push(`Năm ${year}`);
+                principalData.push(Math.round(totalPrincipal));
+                interestData.push(Math.round(totalInterest));
+            }
+            // Thêm nốt năm cuối nếu không chia hết cho 5
+            if (TOTAL_YEARS % 5 !== 0) {
+                const year = TOTAL_YEARS;
+                const totalAsset = yearlyInvestment * ((Math.pow(1 + ANNUAL_RATE, year) - 1) / ANNUAL_RATE);
+                const totalPrincipal = yearlyInvestment * year;
+                const totalInterest = totalAsset - totalPrincipal;
+                labels.push(`Năm ${year}`);
+                principalData.push(Math.round(totalPrincipal));
+                interestData.push(Math.round(totalInterest));
+            }
+
+            return { labels, principalData, interestData };
+        }
+
+        // 4. Khởi tạo biểu đồ
+        const ctx = document.getElementById('investmentChart').getContext('2d');
+        const dataPoints = calculateData();
+
+        const investmentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dataPoints.labels,
+                datasets: [
+                    {
+                        label: 'Tiền gốc đã đầu tư',
+                        data: dataPoints.principalData,
+                        backgroundColor: '#071C2C',
+                        borderRadius: 4,
+                    },
+                    {
+                        label: 'Tiền lãi sinh ra',
+                        data: dataPoints.interestData,
+                        backgroundColor: '#FEECD2',
+                        borderRadius: 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        padding: 12,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += formatVND(context.parsed.y);
+                                }
+                                return label;
+                            },
+                            footer: function (tooltipItems) {
+                                let total = 0;
+                                tooltipItems.forEach(function (tooltipItem) {
+                                    total += tooltipItem.parsed.y;
+                                });
+                                return 'Tổng tài sản: ' + formatVND(total);
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            font: {
+                                size: 13,
+                                weight: '600'
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                if (value >= 1e9) return (value / 1e9).toFixed(1) + ' Tỷ';
+                                if (value >= 1e6) return (value / 1e6).toFixed(0) + ' Tr';
+                                return formatVND(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 5. Xử lý cập nhật màu sắc và dữ liệu Real-time
+        const colorPrincipalInput = document.getElementById('colorPrincipal');
+        const colorInterestInput = document.getElementById('colorInterest');
+        const colorChartBgInput = document.getElementById('colorChartBg');
+        const chartWrapper = document.getElementById('chartWrapper');
+
+        const monthlyInvInput = document.getElementById('monthlyInv');
+        const annualRateInput = document.getElementById('annualRate');
+        const totalYearsInput = document.getElementById('totalYears');
+
+        function updateAll() {
+            // Cập nhật dữ liệu
+            MONTHLY_INVESTMENT = parseFloat(monthlyInvInput.value) || 0;
+            ANNUAL_RATE = (parseFloat(annualRateInput.value) || 0) / 100;
+            TOTAL_YEARS = parseInt(totalYearsInput.value) || 0;
+
+            const newData = calculateData();
+            investmentChart.data.labels = newData.labels;
+            investmentChart.data.datasets[0].data = newData.principalData;
+            investmentChart.data.datasets[1].data = newData.interestData;
+
+            // Cập nhật màu sắc
+            const principalColor = colorPrincipalInput.value;
+            const interestColor = colorInterestInput.value;
+            const bgColor = colorChartBgInput.value;
+
+            document.getElementById('hexPrincipal').innerText = principalColor.toUpperCase();
+            document.getElementById('hexInterest').innerText = interestColor.toUpperCase();
+            document.getElementById('hexChartBg').innerText = bgColor.toUpperCase();
+
+            investmentChart.data.datasets[0].backgroundColor = principalColor;
+            investmentChart.data.datasets[1].backgroundColor = interestColor;
+            chartWrapper.style.backgroundColor = bgColor;
+
+            // Cập nhật header text
+            document.querySelector('h1').innerText = `Biểu đồ tích lũy ${Math.round(MONTHLY_INVESTMENT / 1000000)} triệu/tháng trong ${TOTAL_YEARS} năm`;
+            document.querySelector('.subtitle').innerText = `Giả định lãi suất ${(ANNUAL_RATE * 100).toFixed(1)}%/năm, lãi kép tính hàng năm`;
+
+            investmentChart.update();
+        }
+
+        // Gắn sự kiện lắng nghe
+        [colorPrincipalInput, colorInterestInput, colorChartBgInput, monthlyInvInput, annualRateInput, totalYearsInput].forEach(input => {
+            input.addEventListener('input', updateAll);
+        });
+
+        // Hàm tải ảnh biểu đồ
+        function downloadImage(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+            const link = document.createElement('a');
+            link.download = fileName + '.png';
+            link.href = tempCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        // Khởi tạo ban đầu
+        updateAll();
+
+    </script>
+
+</body>
+
+</html>

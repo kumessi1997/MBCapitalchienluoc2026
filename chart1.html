@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biểu đồ Lãi Kép</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Tùy chỉnh font chữ */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-white min-h-screen flex items-center justify-center p-4 md:p-8">
+
+    <!-- Card Container -->
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-10 w-full max-w-7xl">
+
+        <!-- Header & Control Panel -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div class="text-center md:text-left">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">Phân tích Đầu tư & Lạm phát (30 năm)</h1>
+                <p class="text-slate-500">Sức mạnh của lãi kép và sự bào mòn sức mua của lạm phát</p>
+            </div>
+
+            <!-- Control Panel -->
+            <div
+                class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-slate-50 px-5 py-3 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label for="initialP" class="font-medium text-slate-700 text-sm">Vốn (VNĐ):</label>
+                        <input type="number" id="initialP" value="100000000" step="10000000"
+                            class="w-28 px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="rateCompound" class="font-medium text-slate-700 text-sm">Lãi (%):</label>
+                        <input type="number" id="rateCompound" value="8" step="0.5"
+                            class="w-16 px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 outline-none">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="rateInflation" class="font-medium text-slate-700 text-sm">Lạm phát (%):</label>
+                        <input type="number" id="rateInflation" value="5" step="0.5"
+                            class="w-16 px-2 py-1 text-sm border border-slate-300 rounded focus:border-blue-500 outline-none">
+                    </div>
+                </div>
+                <div class="hidden sm:block h-6 w-px bg-slate-300"></div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label for="chartColor1" class="font-medium text-slate-700 text-sm">Màu Lãi:</label>
+                        <input type="color" id="chartColor1" value="#141ED2"
+                            class="w-8 h-8 rounded cursor-pointer border-none bg-transparent hover:scale-105 transition-transform">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="chartColor2" class="font-medium text-slate-700 text-sm">Màu Lạm phát:</label>
+                        <input type="color" id="chartColor2" value="#eb2747"
+                            class="w-8 h-8 rounded cursor-pointer border-none bg-transparent hover:scale-105 transition-transform">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-10">
+
+            <!-- Phần 1: Lãi Kép -->
+            <div class="bg-white p-6 relative">
+                <div class="flex justify-center items-center gap-4 mb-4">
+                    <h2 class="text-xl font-bold text-slate-800 text-center">Biểu đồ Lãi Kép (8%/năm)</h2>
+                    <button onclick="downloadImage('compoundChart', 'bieu-do-lai-kep')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-all shadow-md flex items-center gap-2 text-sm font-semibold" title="Tải ảnh biểu đồ">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Chụp ảnh</span>
+                    </button>
+                </div>
+
+                <!-- Summary Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                        <p class="text-xs font-medium text-slate-500 mb-1">Vốn ban đầu</p>
+                        <p class="text-lg font-bold text-slate-800" id="initial-capital">0 VNĐ</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                        <p class="text-xs font-medium text-slate-500 mb-1">Lãi suất</p>
+                        <p class="text-lg font-bold text-slate-800">8% / năm</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                        <p class="text-xs font-medium text-slate-500 mb-1">Sau 30 năm</p>
+                        <p class="text-lg font-bold text-emerald-600" id="final-value">0 VNĐ</p>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="relative w-full h-[320px]">
+                    <canvas id="compoundChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Phần 2: Lạm Phát -->
+            <div class="bg-white p-6 relative">
+                <div class="flex justify-center items-center gap-4 mb-4">
+                    <h2 class="text-xl font-bold text-slate-800 text-center">Biểu đồ Thâm Hụt Lạm Phát (5%/năm)</h2>
+                    <button onclick="downloadImage('inflationChart', 'bieu-do-lam-phat')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg transition-all shadow-md flex items-center gap-2 text-sm font-semibold" title="Tải ảnh biểu đồ">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Chụp ảnh</span>
+                    </button>
+                </div>
+
+                <!-- Summary Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                        <p class="text-xs font-medium text-slate-500 mb-1">Vốn ban đầu</p>
+                        <p class="text-lg font-bold text-slate-800" id="inf-initial-capital">0 VNĐ</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                        <p class="text-xs font-medium text-slate-500 mb-1">Lạm phát</p>
+                        <p class="text-lg font-bold text-slate-800">5% / năm</p>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 text-center shadow-sm">
+                        <p class="text-xs font-medium text-slate-500 mb-1">Sức mua sau 30 năm</p>
+                        <p class="text-lg font-bold text-rose-600" id="inf-final-value">0 VNĐ</p>
+                    </div>
+                </div>
+
+                <!-- Chart Container -->
+                <div class="relative w-full h-[320px]">
+                    <canvas id="inflationChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // 1. Thông số đầu tư (Mặc định)
+        let P = 100000000; // 100 triệu VNĐ
+        let r_compound = 0.08; // Lãi kép 8%/năm
+        let r_inflation = 0.05; // Lạm phát 5%/năm
+        const n = 30; // 30 năm
+
+        // Hàm format tiền tệ
+        const formatCurrency = (value) => {
+            return Math.round(value).toLocaleString('vi-VN') + ' VNĐ';
+        };
+
+        // Hàm chuyển mã Hex sang dạng RGB để dùng cho gradient
+        const hexToRgb = (hex) => {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '16, 185, 129';
+        };
+
+        // 2. Tính toán dữ liệu
+        function calculateData() {
+            const years = [];
+            const compoundValues = [];
+            const inflationValues = [];
+
+            for (let i = 0; i <= n; i++) {
+                years.push(`Năm ${i}`);
+                // Lãi kép: A = P * (1 + r)^n
+                compoundValues.push(P * Math.pow((1 + r_compound), i));
+                // Lạm phát (suy giảm sức mua): Giá trị thực = P / (1 + r)^n
+                inflationValues.push(P / Math.pow((1 + r_inflation), i));
+            }
+            return { years, compoundValues, inflationValues };
+        }
+
+        // 3. Cập nhật UI và Biểu đồ
+        function updateAll() {
+            // Đọc giá trị từ inputs
+            P = parseFloat(document.getElementById('initialP').value) || 0;
+            r_compound = (parseFloat(document.getElementById('rateCompound').value) || 0) / 100;
+            r_inflation = (parseFloat(document.getElementById('rateInflation').value) || 0) / 100;
+
+            const data = calculateData();
+            const finalCompound = data.compoundValues[data.compoundValues.length - 1];
+            const finalInflation = data.inflationValues[data.inflationValues.length - 1];
+
+            // Cập nhật Summary Metrics
+            document.getElementById('initial-capital').innerText = formatCurrency(P);
+            document.getElementById('final-value').innerText = formatCurrency(finalCompound);
+            document.getElementById('inf-initial-capital').innerText = formatCurrency(P);
+            document.getElementById('inf-final-value').innerText = formatCurrency(finalInflation);
+
+            // Cập nhật text % lãi/lạm phát trong UI (nếu cần - hiện tại class text-slate-800 cứng 8% và 5%)
+            // Tìm các chỗ text cố định để cập nhật
+            const headers = document.querySelectorAll('h2.text-xl');
+            headers[0].innerText = `Biểu đồ Lãi Kép (${(r_compound * 100).toFixed(1)}%/năm)`;
+            headers[1].innerText = `Biểu đồ Thâm Hụt Lạm Phát (${(r_inflation * 100).toFixed(1)}%/năm)`;
+            
+            // Cập nhật trong summary grid
+            const summaryLabels = document.querySelectorAll('.grid-cols-1.md\\:grid-cols-3');
+            summaryLabels[0].children[1].querySelector('p.font-bold').innerText = `${(r_compound * 100).toFixed(1)}% / năm`;
+            summaryLabels[1].children[1].querySelector('p.font-bold').innerText = `${(r_inflation * 100).toFixed(1)}% / năm`;
+
+            // Cập nhật Biểu đồ
+            compoundChart.data.labels = data.years;
+            compoundChart.data.datasets[0].data = data.compoundValues;
+            compoundChart.update();
+
+            inflationChart.data.labels = data.years;
+            inflationChart.data.datasets[0].data = data.inflationValues;
+            inflationChart.update();
+        }
+
+        const dataInitial = calculateData();
+
+        // 4. Cấu hình dùng chung cho 2 biểu đồ
+        const createGradient = (ctx, colorHex) => {
+            const rgb = hexToRgb(colorHex);
+            const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+            gradient.addColorStop(0, `rgba(${rgb}, 0.6)`);
+            gradient.addColorStop(1, `rgba(${rgb}, 0.0)`);
+            return gradient;
+        };
+
+        const baseChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index',
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleFont: { size: 14, family: 'Inter' },
+                    bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                    padding: 12, cornerRadius: 8, displayColors: false,
+                    callbacks: {
+                        label: function (context) {
+                            return 'Giá trị: ' + formatCurrency(context.parsed.y);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { family: 'Inter' }, color: '#64748b', maxTicksLimit: 10 }
+                },
+                y: {
+                    grid: { color: '#e2e8f0', drawBorder: false },
+                    ticks: {
+                        font: { family: 'Inter' }, color: '#64748b',
+                        callback: function (value) {
+                            if (value >= 1000000000) return (value / 1000000000).toLocaleString('vi-VN') + ' Tỷ';
+                            if (value >= 1000000) return (value / 1000000).toLocaleString('vi-VN') + ' Tr';
+                            return value.toLocaleString('vi-VN');
+                        }
+                    }
+                }
+            }
+        };
+
+        // Khởi tạo Biểu đồ Lãi Kép
+        const ctxCompound = document.getElementById('compoundChart').getContext('2d');
+        let defaultColor1 = '#141ED2';
+
+        const compoundChart = new Chart(ctxCompound, {
+            type: 'line',
+            data: {
+                labels: dataInitial.years,
+                datasets: [{
+                    label: 'Giá trị tài sản',
+                    data: dataInitial.compoundValues,
+                    borderColor: defaultColor1,
+                    backgroundColor: createGradient(ctxCompound, defaultColor1),
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: defaultColor1,
+                    pointBorderWidth: 2, pointRadius: 3, pointHoverRadius: 6,
+                    fill: true, tension: 0.4
+                }]
+            },
+            options: baseChartOptions
+        });
+
+        // Khởi tạo Biểu đồ Lạm Phát
+        const ctxInflation = document.getElementById('inflationChart').getContext('2d');
+        let defaultColor2 = '#eb2747';
+
+        const inflationChart = new Chart(ctxInflation, {
+            type: 'line',
+            data: {
+                labels: dataInitial.years,
+                datasets: [{
+                    label: 'Sức mua',
+                    data: dataInitial.inflationValues,
+                    borderColor: defaultColor2,
+                    backgroundColor: createGradient(ctxInflation, defaultColor2),
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: defaultColor2,
+                    pointBorderWidth: 2, pointRadius: 3, pointHoverRadius: 6,
+                    fill: true, tension: 0.4
+                }]
+            },
+            options: baseChartOptions
+        });
+
+        // 5. Lắng nghe sự kiện đổi màu trên bảng điều khiển
+        document.getElementById('chartColor1').addEventListener('input', function (e) {
+            const newColor = e.target.value;
+            compoundChart.data.datasets[0].borderColor = newColor;
+            compoundChart.data.datasets[0].backgroundColor = createGradient(ctxCompound, newColor);
+            compoundChart.data.datasets[0].pointBorderColor = newColor;
+            compoundChart.update();
+        });
+
+        document.getElementById('chartColor2').addEventListener('input', function (e) {
+            const newColor = e.target.value;
+            inflationChart.data.datasets[0].borderColor = newColor;
+            inflationChart.data.datasets[0].backgroundColor = createGradient(ctxInflation, newColor);
+            inflationChart.data.datasets[0].pointBorderColor = newColor;
+            inflationChart.update();
+        });
+
+        // Lắng nghe sự kiện thay đổi dữ liệu
+        document.getElementById('initialP').addEventListener('input', updateAll);
+        document.getElementById('rateCompound').addEventListener('input', updateAll);
+        document.getElementById('rateInflation').addEventListener('input', updateAll);
+
+        // Hàm tải ảnh biểu đồ
+        function downloadImage(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            
+            // Tạo một canvas tạm thời để vẽ nền trắng (tránh ảnh trong suốt bị tối trên một số ứng dụng)
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Fill nền trắng
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Vẽ canvas biểu đồ lên trên
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            // Tải về
+            const link = document.createElement('a');
+            link.download = fileName + '.png';
+            link.href = tempCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+
+        // Chạy lần đầu để đồng bộ UI
+        updateAll();
+
+    </script>
+</body>
+
+</html>

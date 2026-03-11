@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Phân Tích Quỹ Mở Toàn Cầu & Châu Á</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tailwind CSS cho layout nhanh & đẹp -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            /* Xám nhạt slide tài chính */
+            color: #1f2937;
+        }
+
+        .chart-container {
+            transition: all 0.3s ease;
+        }
+
+        /* Tùy chỉnh input color để trông chuyên nghiệp hơn */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        .control-panel {
+            backdrop-filter: blur(8px);
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- HEADER -->
+        <header class="mb-8 text-center md:text-left">
+            <h1 class="text-3xl font-extrabold text-[#071C2C]">PHÂN TÍCH THỊ TRƯỜNG QUY MÔ QUỸ MỞ</h1>
+            <p class="text-gray-500 mt-2 font-medium">Báo cáo chiến lược đầu tư - Dữ liệu cập nhật Q3/2024</p>
+        </header>
+
+        <!-- CONTROL PANEL -->
+        <div class="control-panel mb-8 p-6 rounded-2xl shadow-sm border border-gray-200">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Bảng điều khiển giao diện
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-gray-400 uppercase">Dữ liệu Quỹ Toàn Cầu (Nhãn:Giá trị, ngăn cách bởi dấu phẩy)</label>
+                    <textarea id="pieDataInput" class="w-full p-2 text-xs border rounded h-20 font-mono">Quỹ cổ phiếu:36039, Quỹ trái phiếu:14140, Quỹ hỗn hợp:7749, Quỹ tiền tệ:11215, Quỹ mở khác:5811</textarea>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="text-xs font-bold text-gray-400 uppercase">Dữ liệu Quỹ Châu Á (Nhãn:Giá trị, ngăn cách bởi dấu phẩy)</label>
+                    <textarea id="barDataInput" class="w-full p-2 text-xs border rounded h-20 font-mono">Trung Quốc:4023, Nhật Bản:2447, Ấn Độ:794, Hàn Quốc:748, Đài Loan:282, Việt Nam*:2.3</textarea>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Pie Chart Controls -->
+                <div>
+                    <h3 class="font-semibold mb-3 text-sm text-gray-700">Tùy chỉnh Quỹ Toàn Cầu (Pie)</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="pieColor0" value="#071C2C">
+                            <span class="text-xs">Cổ phiếu</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="pieColor1" value="#A28C75">
+                            <span class="text-xs">Trái phiếu</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="pieColor2" value="#2563EB">
+                            <span class="text-xs">Hỗn hợp</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="pieColor3" value="#10B981">
+                            <span class="text-xs">Tiền tệ</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="pieColor4" value="#F59E0B">
+                            <span class="text-xs">Khác</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="pieBorderColor" value="#ffffff">
+                            <span class="text-xs">Viền</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bar Chart Controls -->
+                <div>
+                    <h3 class="font-semibold mb-3 text-sm text-gray-700">Tùy chỉnh Quỹ Châu Á (Bar)</h3>
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="barColor" value="#071C2C">
+                            <span class="text-xs">Cột</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="barLabelColor" value="#1f2937">
+                            <span class="text-xs">Nhãn số</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="barAxisColor" value="#9ca3af">
+                            <span class="text-xs">Trục</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100 shadow-sm">
+                            <input type="color" id="barBgColor" value="#ffffff">
+                            <span class="text-xs">Nền Chart</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- CHARTS SECTION -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- PIE CHART CARD -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 chart-container">
+                <div class="mb-4 flex justify-between items-start">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 leading-tight">Tổng tài sản quỹ mở toàn cầu theo loại hình quỹ</h2>
+                        <p class="text-sm text-gray-500 font-medium">Đơn vị: Tỷ USD | Thời điểm: Q3/2024</p>
+                    </div>
+                    <button onclick="downloadImage('pieChart', 'bieu-do-quy-toan-cau')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-all shadow-md flex items-center gap-2 text-sm font-semibold" title="Tải ảnh biểu đồ">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Chụp ảnh</span>
+                    </button>
+                </div>
+                <div class="relative h-[400px]">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- BAR CHART CARD -->
+            <div id="barChartCard" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 chart-container">
+                <div class="mb-4 flex justify-between items-start">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800 leading-tight">TỔNG TÀI SẢN QUỸ MỞ MỘT SỐ NƯỚC CHÂU Á</h2>
+                        <p class="text-sm text-gray-500 font-medium leading-normal">
+                            (tỷ USD, tính đến cuối Q3/2024)<br>
+                            <span class="italic text-xs">*Số liệu Việt Nam tại thời điểm cuối năm 2023</span>
+                        </p>
+                    </div>
+                    <button onclick="downloadImage('barChart', 'bieu-do-quy-chau-a')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-all shadow-md flex items-center gap-2 text-sm font-semibold" title="Tải ảnh biểu đồ">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Chụp ảnh</span>
+                    </button>
+                </div>
+                <div class="relative h-[400px]">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-gray-400 text-xs">
+            <p>&copy; 2024 Global Investment Strategy. All data is for illustrative purposes.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const pieDataRaw = {
+            labels: ['Quỹ cổ phiếu', 'Quỹ trái phiếu', 'Quỹ hỗn hợp', 'Quỹ tiền tệ', 'Quỹ mở khác'],
+            values: [36039, 14140, 7749, 11215, 5811]
+        };
+
+        const barDataRaw = {
+            labels: ['Trung Quốc', 'Nhật Bản', 'Ấn Độ', 'Hàn Quốc', 'Đài Loan', 'Việt Nam*'],
+            values: [4023, 2447, 794, 748, 282, 2.3]
+        };
+
+        // --- HELPER FUNCTIONS ---
+        // --- HELPER FUNCTIONS ---
+        const formatCurrency = (val) => new Intl.NumberFormat('en-US').format(val);
+
+        // Plugin vẽ số liệu trên biểu đồ
+        const customDataLabels = {
+            id: 'customDataLabels',
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                const { ctx, data } = chart;
+                ctx.save();
+
+                if (chart.config.type === 'bar') {
+                    chart.getDatasetMeta(0).data.forEach((datapoint, index) => {
+                        ctx.font = 'bold 12px Inter';
+                        ctx.fillStyle = document.getElementById('barLabelColor').value;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.fillText(formatCurrency(data.datasets[0].data[index]), datapoint.x, datapoint.y - 5);
+                    });
+                } else if (chart.config.type === 'pie') {
+                    const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                    chart.getDatasetMeta(0).data.forEach((datapoint, index) => {
+                        const { x, y } = datapoint.tooltipPosition();
+                        const percent = ((data.datasets[0].data[index] / total) * 100).toFixed(1) + '%';
+                        ctx.font = 'bold 11px Inter';
+                        ctx.fillStyle = 'white';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(percent, x, y);
+                    });
+                }
+                ctx.restore();
+            }
+        };
+
+        // --- INITIALIZE CHARTS ---
+        let pieChart, barChart;
+
+        function initCharts() {
+            // Lấy dữ liệu ban đầu
+            const pieRawByInput = document.getElementById('pieDataInput').value.split(',').map(s => {
+                const parts = s.split(':');
+                return { label: parts[0].trim(), value: parseFloat(parts[1].trim()) || 0 };
+            });
+
+            const barRawByInput = document.getElementById('barDataInput').value.split(',').map(s => {
+                const parts = s.split(':');
+                return { label: parts[0].trim(), value: parseFloat(parts[1].trim()) || 0 };
+            });
+
+            // PIE CHART
+            const pieCtx = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: pieRawByInput.map(x => x.label),
+                    datasets: [{
+                        data: pieRawByInput.map(x => x.value),
+                        backgroundColor: [
+                            document.getElementById('pieColor0').value,
+                            document.getElementById('pieColor1').value,
+                            document.getElementById('pieColor2').value,
+                            document.getElementById('pieColor3').value,
+                            document.getElementById('pieColor4').value
+                        ],
+                        borderColor: document.getElementById('pieBorderColor').value,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12, family: 'Inter' }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'white',
+                            titleColor: '#071C2C',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: function (context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const val = context.parsed;
+                                    const percent = ((val / total) * 100).toFixed(1);
+                                    return ` ${context.label}: ${formatCurrency(val)} tỷ USD (${percent}%)`;
+                                }
+                            }
+                        }
+                    },
+                    animation: { duration: 1000, easing: 'easeOutQuart' }
+                },
+                plugins: [customDataLabels]
+            });
+
+            // BAR CHART
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: barRawByInput.map(x => x.label),
+                    datasets: [{
+                        label: 'Tài sản',
+                        data: barRawByInput.map(x => x.value),
+                        backgroundColor: document.getElementById('barColor').value,
+                        borderRadius: 6,
+                        hoverBackgroundColor: '#A28C75'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f3f4f6' },
+                            ticks: {
+                                font: { family: 'Inter' },
+                                color: document.getElementById('barAxisColor').value,
+                                callback: (value) => value === 0 ? 0 : formatCurrency(value)
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                font: { family: 'Inter', weight: '600' },
+                                color: document.getElementById('barAxisColor').value
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => ` Giá trị: ${formatCurrency(context.parsed.y)} tỷ USD`
+                            }
+                        }
+                    },
+                    animation: { duration: 1000, easing: 'easeOutQuart' }
+                },
+                plugins: [customDataLabels]
+            });
+        }
+
+        // --- INTERACTIVITY LOGIC ---
+
+        function updateAll() {
+            // Cập nhật dữ liệu Pie
+            const pieRawText = document.getElementById('pieDataInput').value;
+            const pieData = pieRawText.split(',').map(s => {
+                const parts = s.split(':');
+                return { label: parts[0]?.trim(), value: parseFloat(parts[1]?.trim()) || 0 };
+            }).filter(x => x.label);
+            
+            pieChart.data.labels = pieData.map(x => x.label);
+            pieChart.data.datasets[0].data = pieData.map(x => x.value);
+            pieChart.data.datasets[0].backgroundColor = [
+                document.getElementById('pieColor0').value,
+                document.getElementById('pieColor1').value,
+                document.getElementById('pieColor2').value,
+                document.getElementById('pieColor3').value,
+                document.getElementById('pieColor4').value
+            ];
+            pieChart.data.datasets[0].borderColor = document.getElementById('pieBorderColor').value;
+
+            // Cập nhật dữ liệu Bar
+            const barRawText = document.getElementById('barDataInput').value;
+            const barData = barRawText.split(',').map(s => {
+                const parts = s.split(':');
+                return { label: parts[0]?.trim(), value: parseFloat(parts[1]?.trim()) || 0 };
+            }).filter(x => x.label);
+
+            barChart.data.labels = barData.map(x => x.label);
+            barChart.data.datasets[0].data = barData.map(x => x.value);
+            barChart.data.datasets[0].backgroundColor = document.getElementById('barColor').value;
+
+            // Cập nhật trục và nhãn
+            barChart.options.scales.y.ticks.color = document.getElementById('barAxisColor').value;
+            barChart.options.scales.x.ticks.color = document.getElementById('barAxisColor').value;
+
+            // Cập nhật nền card
+            document.getElementById('barChartCard').style.backgroundColor = document.getElementById('barBgColor').value;
+
+            pieChart.update();
+            barChart.update();
+        }
+
+        // Đợi DOM load xong mới gán sự kiện
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            
+            // Lắng nghe sự kiện trên tất cả input
+            const allInputs = [
+                'pieColor0', 'pieColor1', 'pieColor2', 'pieColor3', 'pieColor4', 'pieBorderColor',
+                'barColor', 'barLabelColor', 'barAxisColor', 'barBgColor',
+                'pieDataInput', 'barDataInput'
+            ];
+            
+            allInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', updateAll);
+            });
+        });
+
+        // Hàm tải ảnh biểu đồ
+        function downloadImage(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            tempCtx.drawImage(canvas, 0, 0);
+            const link = document.createElement('a');
+            link.download = fileName + '.png';
+            link.href = tempCanvas.toDataURL('image/png', 1.0);
+            link.click();
+        }
+    </script>
+</body>
+
+</html>
